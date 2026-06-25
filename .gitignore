@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+state/
+lakehouse/
+
+# private planning / mentor handoff docs — kept local, not part of the public portfolio
+START_HERE.md
+PROJECT_BRIEF.md
