@@ -2,3 +2,8 @@ confluent-kafka>=2.0
 requests>=2.31
 pyspark==3.5.*
 delta-spark==3.2.*
+fastapi>=0.110
+uvicorn[standard]>=0.29
+deltalake>=0.17
+pyarrow>=14
+pandas>=2.0
