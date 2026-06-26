@@ -19,6 +19,8 @@ import pandas as pd
 from deltalake import DeltaTable
 from fastapi import FastAPI, Query
 
+from serving.rag import answer as rag_answer
+
 GOLD_HAZARDS_PATH = "lakehouse/gold/hazards"
 EARTH_RADIUS_KM = 6371.0
 
@@ -75,3 +77,16 @@ def hazards(
         "count": len(results),
         "hazards": results,
     }
+
+
+@app.get("/ask")
+def ask(
+    q: str = Query(..., min_length=3, description="natural-language question"),
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    radius_km: float = Query(300, gt=0, le=20000),
+):
+    """Geo-aware RAG: answer `q` grounded in hazards near (lat, lon), with citations."""
+    result = rag_answer(q, lat, lon, radius_km)
+    return {"query": {"q": q, "lat": lat, "lon": lon, "radius_km": radius_km}, **result}
+

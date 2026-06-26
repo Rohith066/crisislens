@@ -7,3 +7,6 @@ uvicorn[standard]>=0.29
 deltalake>=0.17
 pyarrow>=14
 pandas>=2.0
+sentence-transformers>=2.7
+faiss-cpu>=1.8
+# NOTE: the /ask RAG also needs Ollama running locally (https://ollama.com): ollama pull llama3.2:3b

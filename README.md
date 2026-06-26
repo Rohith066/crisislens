@@ -61,7 +61,7 @@ downstream layer is source-agnostic:
 |---|---|---|
 | **1 — Streaming ingestion** | Kafka producers (USGS + NWS/NOAA) → canonical schema, source-aware dedup, durable & restart-safe | ✅ **Complete** |
 | **2 — Processing + lakehouse** | Spark Structured Streaming → Delta medallion (bronze → silver → gold), geo-enrichment, dbt | 🚧 In progress |
-| **3 — RAG + agent serving** | FastAPI: geo feed + geo-aware agentic RAG with cited, hallucination-guarded answers; map UI | Planned |
+| **3 — RAG + agent serving** | FastAPI `/hazards` geo feed + `/ask` geo-aware RAG (local embeddings + FAISS + Ollama), cited & guardrailed; map UI next | 🚧 In progress |
 | **4 — Deploy + operate** | Dockerize, Terraform on AWS, GitHub Actions CI/CD, pipeline + LLM monitoring | Planned |
 
 **Phase 1 highlights:** two producers ingest live government feeds into Kafka through one
@@ -77,7 +77,7 @@ across restarts on a live, high-churn feed.
 |---|---|
 | Ingestion | Python, `confluent-kafka`, Apache Kafka (Docker) |
 | Processing | Apache Spark Structured Streaming, Delta Lake (medallion), dbt |
-| Serving *(planned)* | FastAPI, vector DB (FAISS/pgvector), LangChain, Leaflet map |
+| Serving | FastAPI, delta-rs, sentence-transformers + FAISS, Ollama (local LLM); Leaflet map (next) |
 | Infra *(planned)* | Docker, Terraform, AWS, GitHub Actions CI/CD, monitoring |
 
 ## Quickstart (local)
@@ -113,7 +113,13 @@ producers/
   usgs_producer.py     # USGS earthquakes  -> topic `earthquakes`
   nws_producer.py      # NWS/NOAA alerts   -> topic `weather-alerts`
 processing/
-  bronze_stream.py     # Spark Structured Streaming: Kafka -> Delta bronze
+  bronze_stream.py     # Spark Structured Streaming: Kafka -> Delta bronze (raw)
+  silver_stream.py     # bronze -> typed, deduped, cleaned silver (Delta MERGE)
+  gold.py              # silver -> serving marts (map-ready hazards + rollups)
+serving/
+  api.py               # FastAPI: /hazards geo feed + /ask geo-aware RAG
+  retrieval.py         # geo filter + FAISS semantic retrieval (local embeddings)
+  rag.py               # grounded, cited answer via local Ollama LLM
 docker-compose.yml     # local single-broker Kafka
 requirements.txt
 ```
