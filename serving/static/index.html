@@ -89,11 +89,13 @@
       data.hazards.forEach(h => {
         L.circleMarker([h.lat, h.lon], {
           radius: 6, color: "#333", weight: 0.5,
-          fillColor: COLORS[h.severity_level] || COLORS.unknown, fillOpacity: 0.85
+          fillColor: COLORS[h.severity_level] || COLORS.unknown,
+          fillOpacity: h.geo_source === "zone_centroid" ? 0.45 : 0.85
         }).bindPopup(
           `<b>${h.title || h.hazard_type}</b><br>` +
           `${h.hazard_type} · <b>${h.severity_level}</b><br>` +
-          `${h.place || ""}<br>${h.distance_km} km away`
+          `${h.place || ""}<br>${h.distance_km} km away` +
+          (h.geo_source === "zone_centroid" ? "<br><i>approximate (zone centroid)</i>" : "")
         ).addTo(hazardLayer);
       });
       document.getElementById("count").textContent =

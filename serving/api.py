@@ -79,7 +79,7 @@ def hazards(
     near["distance_km"] = near["distance_km"].round(1)
 
     cols = ["event_id", "source", "hazard_type", "severity", "severity_level",
-            "lat", "lon", "place", "occurred_at", "title", "url", "distance_km"]
+            "lat", "lon", "geo_source", "place", "occurred_at", "title", "url", "distance_km"]
     results = [{k: _clean(v) for k, v in row.items()} for row in near[cols].to_dict("records")]
 
     return {

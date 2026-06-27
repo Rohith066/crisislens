@@ -122,6 +122,7 @@ def normalize(feature):
         "lat":         lat,
         "lon":         lon,
         "place":       props.get("areaDesc"),
+        "zones":       props.get("affectedZones") or [],  # zone URLs -> coords when geometry is null
         "occurred_at": to_utc_iso(props.get("onset") or props.get("effective") or props.get("sent")),
         "updated_at":  to_utc_iso(props.get("sent")),
         "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

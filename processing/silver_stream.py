@@ -15,7 +15,7 @@ Run:  python processing/silver_stream.py
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, to_timestamp, row_number
 from pyspark.sql.window import Window
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType, ArrayType
 from delta import configure_spark_with_delta_pip
 from delta.tables import DeltaTable
 
@@ -38,6 +38,7 @@ EVENT_SCHEMA = StructType([
     StructField("ingested_at", StringType()),
     StructField("url", StringType()),
     StructField("description", StringType()),
+    StructField("zones", ArrayType(StringType())),
 ])
 
 TS_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'"  # matches what the producers emit (UTC, 'Z' suffix)
@@ -60,7 +61,7 @@ def upsert_to_silver(micro_batch_df, batch_id):
     spark = micro_batch_df.sparkSession
 
     # 1) Within this batch, keep only the newest row per event_id.
-    newest = Window.partitionBy("event_id").orderBy(col("updated_at").desc())
+    newest = Window.partitionBy("event_id").orderBy(col("updated_at").desc(), col("ingested_at").desc())
     deduped = (
         micro_batch_df
         .withColumn("_rn", row_number().over(newest))
