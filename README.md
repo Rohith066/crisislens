@@ -82,7 +82,7 @@ across restarts on a live, high-churn feed.
 
 ## Quickstart (local)
 
-**Prerequisites:** Docker, Python 3.12, and Java 17 (Spark runs on the JVM).
+**Prerequisites:** Docker, Python 3.12, Java 17 (Spark runs on the JVM), and [Ollama](https://ollama.com) (for the `/ask` RAG).
 
 ```bash
 # 1. Start a local Kafka broker
@@ -102,8 +102,18 @@ docker exec broker /opt/kafka/bin/kafka-topics.sh --create --topic weather-alert
 ./.venv/bin/python producers/usgs_producer.py
 ./.venv/bin/python producers/nws_producer.py
 
-# 5. Land the streams into the Delta lakehouse (bronze)
+# 5. Build the Delta lakehouse: bronze (raw) -> silver (clean) -> gold (serving marts)
 ./.venv/bin/python processing/bronze_stream.py
+./.venv/bin/python processing/silver_stream.py
+./.venv/bin/python processing/gold.py
+
+# 6. (for /ask) start a local LLM
+ollama serve            # in its own terminal
+ollama pull llama3.2:3b
+
+# 7. Serve the API + map
+./.venv/bin/uvicorn serving.api:app --reload
+# then open http://localhost:8000/  (map UI)  and  /docs  (API)
 ```
 
 ## Repository layout
@@ -120,6 +130,7 @@ serving/
   api.py               # FastAPI: /hazards geo feed + /ask geo-aware RAG
   retrieval.py         # geo filter + FAISS semantic retrieval (local embeddings)
   rag.py               # grounded, cited answer via local Ollama LLM
+  static/index.html    # Leaflet map UI (served at http://localhost:8000/)
 docker-compose.yml     # local single-broker Kafka
 requirements.txt
 ```

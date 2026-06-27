@@ -16,8 +16,11 @@ Run (from the project root):
 
 import numpy as np
 import pandas as pd
+from pathlib import Path
+
 from deltalake import DeltaTable
 from fastapi import FastAPI, Query
+from fastapi.responses import FileResponse
 
 from serving.rag import answer as rag_answer
 
@@ -25,6 +28,13 @@ GOLD_HAZARDS_PATH = "lakehouse/gold/hazards"
 EARTH_RADIUS_KM = 6371.0
 
 app = FastAPI(title="CrisisLens API", version="0.1")
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/")
+def index():
+    """Serve the Leaflet map UI."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
