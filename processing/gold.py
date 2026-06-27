@@ -39,14 +39,23 @@ def main():
 
     silver = spark.read.format("delta").load(SILVER_PATH)
 
-    # Coarse, human-readable severity bucket. Works across both sources for now;
-    # true cross-source impact scoring is the Phase 3 severity-triage model.
+    # `severity` is on DIFFERENT scales per source: USGS = earthquake magnitude
+    # (Richter), NWS = categorical level mapped to 1-4. Bucket each on its OWN scale
+    # so a M4.5 quake isn't labelled the same as an NWS "Extreme" alert.
+    mag = col("severity")
     severity_level = (
-        when(col("severity") >= 4, "extreme")
-        .when(col("severity") >= 3, "severe")
-        .when(col("severity") >= 2, "moderate")
-        .when(col("severity") >= 1, "minor")
-        .otherwise("unknown")
+        when(col("source") == "usgs",                  # earthquake magnitude scale
+             when(mag >= 7.0, "extreme")
+             .when(mag >= 6.0, "severe")
+             .when(mag >= 4.5, "moderate")
+             .when(mag >= 2.5, "minor")
+             .otherwise("unknown"))
+        .otherwise(                                     # NWS categorical scale (1-4)
+             when(mag >= 4, "extreme")
+             .when(mag >= 3, "severe")
+             .when(mag >= 2, "moderate")
+             .when(mag >= 1, "minor")
+             .otherwise("unknown"))
     )
     enriched = silver.withColumn("severity_level", severity_level)
 
