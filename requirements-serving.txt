@@ -1,0 +1,10 @@
+# Lean dependencies for the deployed serving image (map + /hazards feed only).
+# The full RAG stack (torch/faiss/sentence-transformers/ollama) is intentionally
+# excluded so the image fits a free-tier instance.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+deltalake>=0.17
+pyarrow>=14
+pandas>=2.0
+numpy
+requests>=2.31

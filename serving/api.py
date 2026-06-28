@@ -22,7 +22,10 @@ from deltalake import DeltaTable
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 
-from serving.rag import answer as rag_answer
+try:
+    from serving.rag import answer as rag_answer
+except Exception:   # RAG deps (torch/faiss/sentence-transformers) absent in lean deploys
+    rag_answer = None
 
 GOLD_HAZARDS_PATH = "lakehouse/gold/hazards"
 EARTH_RADIUS_KM = 6371.0
@@ -97,6 +100,13 @@ def ask(
     radius_km: float = Query(300, gt=0, le=20000),
 ):
     """Geo-aware RAG: answer `q` grounded in hazards near (lat, lon), with citations."""
+    if rag_answer is None:   # lean/hosted deployment without the local LLM stack
+        return {
+            "query": {"q": q, "lat": lat, "lon": lon, "radius_km": radius_km},
+            "answer": ("The AI assistant runs only in the full local stack (it needs a local LLM). "
+                       "This hosted demo serves the live hazard map and the /hazards feed."),
+            "citations": [], "used_llm": False,
+        }
     result = rag_answer(q, lat, lon, radius_km)
     return {"query": {"q": q, "lat": lat, "lon": lon, "radius_km": radius_km}, **result}
 
