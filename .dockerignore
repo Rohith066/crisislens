@@ -5,6 +5,4 @@ __pycache__/
 .DS_Store
 state/
 reference/
-lakehouse/bronze/
-lakehouse/silver/
-lakehouse/_checkpoints/
+lakehouse/

@@ -1,0 +1,50 @@
+name: CI
+
+# Build the serving image, smoke-test it in a container, and (on main) publish
+# it to GitHub Container Registry (GHCR). Free — uses GitHub-hosted runners.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write       # needed to push the image to GHCR
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build serving image
+        run: docker build -t crisislens-api .
+
+      - name: Smoke test the container
+        run: |
+          docker run -d --name api -p 8000:8000 crisislens-api
+          curl --retry 30 --retry-all-errors --retry-connrefused --retry-delay 2 \
+            -sf http://localhost:8000/health
+          curl -sf "http://localhost:8000/hazards?lat=39.74&lon=-104.99&radius_km=300&limit=1" \
+            | grep -q '"count"'
+          echo "✓ smoke test passed"
+          docker rm -f api
+
+      - name: Log in to GHCR
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image to GHCR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          OWNER=${{ github.repository_owner }}
+          IMAGE=ghcr.io/${OWNER,,}/crisislens-api      # GHCR requires a lowercase owner
+          docker tag crisislens-api "$IMAGE:latest"
+          docker tag crisislens-api "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
+          echo "✓ pushed $IMAGE:latest"
