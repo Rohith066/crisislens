@@ -9,3 +9,9 @@ lakehouse/
 # private planning / mentor handoff docs — kept local, not part of the public portfolio
 START_HERE.md
 PROJECT_BRIEF.md
+
+# terraform (never commit state — it can contain sensitive values)
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
